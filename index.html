@@ -201,21 +201,40 @@
             display: block;
         }
         
-        .admin-btn {
-            background: linear-gradient(135deg, #d4af37, #b8941f);
-            color: #000;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s;
+        .user-menu {
+            position: relative;
         }
         
-        .admin-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(20, 20, 30, 0.95);
+            border: 1px solid #d4af37;
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 150px;
+            display: none;
+            z-index: 100;
+        }
+        
+        .user-dropdown.show {
+            display: block;
+        }
+        
+        .user-dropdown button {
+            width: 100%;
+            text-align: right;
+            padding: 8px 12px;
+            color: white;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .user-dropdown button:hover {
+            background: rgba(212, 175, 55, 0.2);
         }
     </style>
 </head>
@@ -242,15 +261,22 @@
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
                 </button>
                 
-                <!-- زر لوحة التحكم للأدمن -->
-                <button id="admin-btn" onclick="router.navigate('admin')" class="admin-btn hidden">
-                    <i class="fas fa-cog"></i>
-                    لوحة التحكم
-                </button>
-                
-                <button id="auth-btn" onclick="router.navigate('login')" class="btn-gold px-6 py-2 rounded-full font-bold text-black">
-                    تسجيل الدخول
-                </button>
+                <!-- زر المستخدم -->
+                <div class="user-menu">
+                    <button id="auth-btn" onclick="handleAuthClick()" class="btn-gold px-6 py-2 rounded-full font-bold text-black">
+                        تسجيل الدخول
+                    </button>
+                    
+                    <!-- Dropdown للمستخدم المسجل -->
+                    <div id="user-dropdown" class="user-dropdown">
+                        <button onclick="router.navigate('admin'); toggleDropdown()" class="hidden" id="admin-menu-item">
+                            <i class="fas fa-cog ml-2"></i> لوحة التحكم
+                        </button>
+                        <button onclick="logout(); toggleDropdown()">
+                            <i class="fas fa-sign-out-alt ml-2"></i> تسجيل الخروج
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
@@ -486,8 +512,9 @@
                         <button type="submit" class="w-full btn-gold py-4 rounded-xl text-lg font-bold text-black">
                             دخول <i class="fas fa-sign-in-alt mr-2"></i>
                         </button>
-                        <p class="text-center text-gray-400 text-sm mt-4">
-                            الإيميلات الأدمن جاهزة للاستخدام مباشرة
+                        <p class="text-center text-gray-400">
+                            ليس لديك حساب؟ 
+                            <button type="button" onclick="router.navigate('register')" class="text-gold hover:underline">سجل الآن</button>
                         </p>
                     </div>
                 </form>
@@ -495,7 +522,39 @@
         </div>
     </div>
 
-    <!-- لوحة التحكم (Admin Dashboard) -->
+    <!-- صفحة التسجيل -->
+    <div id="page-register" class="page pt-24">
+        <div class="container mx-auto px-6 max-w-md">
+            <div class="glass-strong rounded-3xl p-8">
+                <h2 class="text-3xl font-bold text-center mb-8 text-gold">إنشاء حساب</h2>
+                <form id="register-form" onsubmit="handleRegister(event)">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-gray-300 mb-2">الاسم الكامل</label>
+                            <input type="text" id="reg-name" required class="w-full bg-black/30 border border-gray-600 rounded-xl px-4 py-3 text-white focus:border-gold focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 mb-2">البريد الإلكتروني</label>
+                            <input type="email" id="reg-email" required class="w-full bg-black/30 border border-gray-600 rounded-xl px-4 py-3 text-white focus:border-gold focus:outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-gray-300 mb-2">كلمة المرور</label>
+                            <input type="password" id="reg-password" required minlength="6" class="w-full bg-black/30 border border-gray-600 rounded-xl px-4 py-3 text-white focus:border-gold focus:outline-none transition">
+                        </div>
+                        <button type="submit" class="w-full btn-gold py-4 rounded-xl text-lg font-bold text-black">
+                            إنشاء <i class="fas fa-user-plus mr-2"></i>
+                        </button>
+                        <p class="text-center text-gray-400">
+                            لديك حساب؟ 
+                            <button type="button" onclick="router.navigate('login')" class="text-gold hover:underline">تسجيل الدخول</button>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم (Admin Dashboard) - مخفية -->
     <div id="page-admin" class="page pt-24">
         <div class="container mx-auto px-6">
             <div class="flex justify-between items-center mb-8">
@@ -508,7 +567,6 @@
                 </button>
             </div>
             
-            <!-- Tabs -->
             <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
                 <button onclick="switchAdminTab('users')" id="tab-users" class="tab-btn active">👥 المستخدمين</button>
                 <button onclick="switchAdminTab('orders')" id="tab-orders" class="tab-btn">🛒 الطلبات</button>
@@ -516,7 +574,6 @@
                 <button onclick="switchAdminTab('products')" id="tab-products" class="tab-btn">📦 المنتجات</button>
             </div>
             
-            <!-- Users Tab -->
             <div id="content-users" class="tab-content active">
                 <div class="glass-strong rounded-2xl p-6">
                     <h3 class="text-xl font-bold mb-4 text-gold">المستخدمين المسجلين</h3>
@@ -536,7 +593,6 @@
                 </div>
             </div>
             
-            <!-- Orders Tab -->
             <div id="content-orders" class="tab-content">
                 <div class="glass-strong rounded-2xl p-6">
                     <h3 class="text-xl font-bold mb-4 text-gold">الطلبات</h3>
@@ -544,7 +600,6 @@
                 </div>
             </div>
             
-            <!-- Custom Requests Tab -->
             <div id="content-custom" class="tab-content">
                 <div class="glass-strong rounded-2xl p-6">
                     <h3 class="text-xl font-bold mb-4 text-gold">الطلبات المميزة</h3>
@@ -552,7 +607,6 @@
                 </div>
             </div>
             
-            <!-- Products Tab -->
             <div id="content-products" class="tab-content">
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="glass-strong rounded-2xl p-6">
@@ -592,7 +646,7 @@
     </div>
 
     <script>
-        // الـ 20 أدمن جاهزين
+        // الـ 20 أدمن مخفيين (في الكود بس)
         const adminAccounts = [
             { email: 'admin@exotic.com', password: 'exotic2024', name: 'Admin Master' },
             { email: 'admin@onlylordd', password: 'lordd2024', name: 'Admin Lord' },
@@ -636,10 +690,7 @@
             ]
         };
 
-        // المستخدمين (محاكاة)
         let users = JSON.parse(localStorage.getItem('exotic_users')) || [];
-
-        // قائمة الإيميلات الأدمن
         const adminEmails = adminAccounts.map(a => a.email);
 
         // الراوتر
@@ -648,6 +699,12 @@
             history: [],
             
             navigate(page) {
+                // حماية لوحة التحكم - فقط للأدمن
+                if (page === 'admin' && !isAdmin()) {
+                    showToast('غير مصرح!');
+                    return;
+                }
+                
                 this.history.push(this.currentPage);
                 
                 document.querySelectorAll('.page').forEach(p => {
@@ -666,6 +723,9 @@
                     if (page === 'admin') renderAdminDashboard();
                 }
                 
+                // إغلاق الـ dropdown
+                document.getElementById('user-dropdown').classList.remove('show');
+                
                 window.scrollTo(0, 0);
             },
             
@@ -679,36 +739,49 @@
             }
         };
 
-        // التحقق من الأدمن
         function isAdmin() {
             return store.user && adminEmails.includes(store.user.email);
+        }
+
+        // التحكم في الـ dropdown
+        function toggleDropdown() {
+            document.getElementById('user-dropdown').classList.toggle('show');
+        }
+
+        function handleAuthClick() {
+            if (store.user) {
+                toggleDropdown();
+            } else {
+                router.navigate('login');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('exotic_current_user');
+            store.user = null;
+            updateAuthUI();
+            showToast('تم تسجيل الخروج');
+            router.navigate('home');
         }
 
         // تحديث واجهة المستخدم
         function updateAuthUI() {
             const btn = document.getElementById('auth-btn');
-            const adminBtn = document.getElementById('admin-btn');
+            const adminMenuItem = document.getElementById('admin-menu-item');
             
             if (store.user) {
-                btn.innerHTML = `<i class="fas fa-user"></i> ${store.user.name}`;
-                btn.onclick = () => {
-                    localStorage.removeItem('exotic_current_user');
-                    store.user = null;
-                    updateAuthUI();
-                    showToast('تم تسجيل الخروج');
-                    router.navigate('home');
-                };
+                btn.innerHTML = `<i class="fas fa-user-circle ml-2"></i> ${store.user.name}`;
                 
-                // إظهار زر لوحة التحكم للأدمن
+                // إظهار لوحة التحكم في الـ dropdown للأدمن فقط
                 if (isAdmin()) {
-                    adminBtn.classList.remove('hidden');
+                    adminMenuItem.classList.remove('hidden');
                 } else {
-                    adminBtn.classList.add('hidden');
+                    adminMenuItem.classList.add('hidden');
                 }
             } else {
                 btn.textContent = 'تسجيل الدخول';
-                btn.onclick = () => router.navigate('login');
-                adminBtn.classList.add('hidden');
+                btn.onclick = handleAuthClick;
+                adminMenuItem.classList.add('hidden');
             }
         }
 
@@ -745,7 +818,6 @@
             totalEl.textContent = `$${total}`;
         }
 
-        // عرض المنتجات
         function renderProducts() {
             const grid = document.getElementById('products-grid');
             grid.innerHTML = store.products.map(product => `
@@ -917,11 +989,9 @@
             const adminAccount = adminAccounts.find(a => a.email === email && a.password === password);
             
             if (adminAccount) {
-                // تسجيل دخول أدمن
                 localStorage.setItem('exotic_current_user', JSON.stringify(adminAccount));
                 store.user = adminAccount;
                 
-                // إضافة للمستخدمين لو مش موجود
                 if (!users.find(u => u.email === email)) {
                     users.push({...adminAccount, date: new Date().toISOString()});
                     localStorage.setItem('exotic_users', JSON.stringify(users));
@@ -929,7 +999,7 @@
                 
                 updateAuthUI();
                 showToast('تم تسجيل دخول الأدمن!');
-                router.navigate('admin'); // مباشرة للوحة التحكم
+                router.navigate('home');
                 return;
             }
             
@@ -947,14 +1017,36 @@
             }
         }
 
-        // لوحة التحكم (Admin)
-        function renderAdminDashboard() {
-            if (!isAdmin()) {
-                router.navigate('home');
-                showToast('غير مصرح!');
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            
+            // منع تسجيل إيميلات الأدمن
+            if (adminEmails.includes(email)) {
+                showToast('هذا الإيميل محجوز!');
                 return;
             }
             
+            if (users.find(u => u.email === email)) {
+                showToast('الإيميل مستخدم بالفعل!');
+                return;
+            }
+            
+            const newUser = { id: Date.now(), name, email, password, date: new Date().toISOString() };
+            users.push(newUser);
+            localStorage.setItem('exotic_users', JSON.stringify(users));
+            localStorage.setItem('exotic_current_user', JSON.stringify(newUser));
+            
+            store.user = newUser;
+            updateAuthUI();
+            showToast('تم إنشاء الحساب!');
+            router.navigate('home');
+        }
+
+        // لوحة التحكم (Admin)
+        function renderAdminDashboard() {
             renderAdminUsers();
             renderAdminOrders();
             renderAdminCustom();
@@ -1084,6 +1176,14 @@
                 container.appendChild(star);
             }
         }
+
+        // إغلاق الـ dropdown لما تضغط بره
+        document.addEventListener('click', (e) => {
+            const userMenu = document.querySelector('.user-menu');
+            if (!userMenu.contains(e.target)) {
+                document.getElementById('user-dropdown').classList.remove('show');
+            }
+        });
 
         // تهيئة
         document.addEventListener('DOMContentLoaded', () => {
